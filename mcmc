@@ -1,0 +1,74 @@
+
+pacman::p_load(rstanarm,loo,broom,tidyverse)
+
+dat1 <- readRDS(gzcon(url("http://pax.green/lessons/files/bayes.rds")))
+
+
+####################
+
+mod1 <- lm(CHLA ~ PC +  WTEMP + PH, data=dat1)  
+
+summary(mod1)
+
+#############################
+## MODEL 2 estimated with MCMC
+## OPTIONS
+CHAINS = 2
+CORES = 2
+SEED = 2019
+ITER= 1000
+WARMUP = 500
+ADAPT = 0.95
+STEP = 0.01
+TREE = 30
+
+modelform <- 'CHLA ~ PC +  WTEMP + PH'
+
+mod2 <- stan_glm(
+data = dat1
+##
+,verbose = TRUE
+,prior = normal(0,1,autoscale=FALSE)
+,prior_intercept=normal(50,100,autoscale=FALSE)
+,seed = SEED
+,chains=CHAINS, iter=ITER, warmup=WARMUP, cores = CORES
+,QR = TRUE
+,control = list(
+adapt_delta = ADAPT
+,stepsize = STEP
+,max_treedepth=TREE
+)
+##
+,family = gaussian
+,formula = modelform
+)
+##############################################
+# LOOK AT PARAMETERS FOR BOTH MODELS
+mod1
+mod2
+###################
+
+# MODEL 3 WITH HIERARCHICAL BAYES
+
+modelform2 <- 'logCLO ~ logC + logF + PH + (logC + logF + PH  | HUC)'
+
+mod3 <- stan_glmer(
+data = dat1
+##
+,verbose = TRUE
+,prior = normal(0,1,autoscale=FALSE)
+,prior_intercept=normal(50,100,autoscale=FALSE)
+,seed = SEED
+,chains=CHAINS, iter=ITER, warmup=WARMUP, cores = CORES
+,QR = TRUE
+,control = list(
+adapt_delta = ADAPT
+,stepsize = STEP
+,max_treedepth=TREE
+)
+##
+,family = gaussian
+,formula = modelform2
+)
+############
+mod3
