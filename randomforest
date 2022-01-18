@@ -1,0 +1,93 @@
+
+
+
+### LOAD PACKAGES
+rm(list=ls())
+gc()
+
+select <- dplyr::select
+pacman::p_load(parallel,foreach,doParallel,dplyr
+
+pacman::p_load(parallel,foreach,doParallel,dplyr,raster)
+cl <- parallel::makeCluster(detectCores() - 1)
+doParallel::registerDoParallel(cl)
+cores = detectCores()-1
+#######################################
+
+
+
+a0 <- readRDS('F:/cloudforest/data/analyte/analyte5.rds') %>%
+mutate(x = as.numeric(as.character(x)), y = as.numeric(as.character(y))) %>%
+mutate(uid = row_number())  %>%
+mutate(xclass = as.factor(xclass))
+
+t0 <- a0 %>%
+group_by(xclass) %>%
+summarise(count = n()) %>%
+arrange(count)
+t0
+
+#################
+
+n_train <- 3000
+
+train <- a0 %>%
+group_by(xclass) %>%
+sample_n(n_train, replace = F) %>%
+data.frame()
+#########
+trainlist <- train %>%
+distinct(uid) %>% mutate(train=1) 
+##########
+
+n_test <- 2000
+
+test <- a0 %>%
+left_join(trainlist)%>%
+filter(is.na(train)) %>%
+select(-train) %>%
+group_by(xclass) %>% 
+sample_n(size= n_test,replace=F) %>%
+data.frame() 
+#####################################
+
+gc()
+cl <- parallel::makeCluster(detectCores() - 1)
+doParallel::registerDoParallel(cl)
+#########
+###############################################
+mod <- foreach(ntree=rep(500, cores)
+, .combine= randomForest::combine
+, .multicombine=TRUE
+, .packages='randomForest') %dopar% {
+randomForest(
+
+xclass ~ 
+elev +
+n_b2 + b2 + r_bsi + r_nbai + r_ndsi 
+
+
+
+#################################               
+,data = train
+,importance=TRUE
+, ntree=ntree 
+,.inorder = FALSE                                           
+, mtry = sqrt(30)                             
+)} 
+#################
+#################
+#################
+stopCluster(cl)
+
+pred <- predict(mod,test) %>% data.frame() %>% rename(pred=1) 
+actual <- test %>% select(id,x,y,xclass) %>% rename(actual = xclass)
+
+check <- cbind(actual,pred) %>%
+mutate(pred = as.character(pred),actual = as.character(actual)) %>%
+mutate(match = ifelse(actual == pred,1,0))
+
+prop <- sum(check$match)/nrow(check)      
+print(prop)
+
+
