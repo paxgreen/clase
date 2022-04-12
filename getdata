@@ -1,0 +1,41 @@
+from flask import Flask, render_template, request
+from flask_mysqldb import MySQL
+import MySQLdb.cursors
+import mysql.connector
+from mysql import connector
+
+#-----------------------------------------
+# CREATE CANVAS
+
+app = Flask(__name__)
+@app.route('/')
+
+#---------------------------------------------
+# CREATE CONNECTION TO MYSQL
+
+mydb = mysql.connector.connect(
+                        host="pax.green",
+                        port=3306,
+                        user="cmtuser",
+                        passwd="passwordcmtuser",
+                        database="cmt2"
+                    )
+
+cursor = mydb.cursor(dictionary = True)
+
+#------------------------------------------
+# FUNCTION TO GET DATA
+
+def projectlist():
+
+
+    cursor.execute("select * from test0")
+
+    data=list(cursor.fetchall())
+
+    return render_template("getdata.htm",data= data)
+#----------------------------
+# RUN PROGRAM
+
+if __name__ == '__main__':
+    app.run(port=8000,debug=True)
