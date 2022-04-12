@@ -1,0 +1,22 @@
+<!DOCTYPE HTML>
+
+<html>
+
+<head>
+  <title>Untitled</title>
+</head>
+
+<body>
+
+{% for each in data %}
+    {% for key,value in each.items() %}
+        <b>{{key}}</b> - {{value}}  <br>
+    {% endfor %}
+
+-------- <br>
+
+{% endfor %}
+
+</body>
+
+</html>
