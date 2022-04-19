@@ -1,0 +1,68 @@
+<!DOCTYPE HTML>
+
+<html>
+
+<head>
+  <title>Untitled</title>
+</head>
+
+<body>
+
+{% for dictionary in xdata %}
+
+{% for key, value in dictionary.items() %}
+
+<h4>{{key}}</h4>
+<input type="text" id = "{{key}}_{{value}}" value = "{{value}}" />
+<br>
+{% endfor %}
+<br>
+------------------------------------------
+{% endfor %}
+
+<br><br>
+<button onclick = "update_values()"> Update </button>
+
+</body>
+
+<script>
+
+
+function update_values(){
+
+    const uri = "/"
+    const xhr = new XMLHttpRequest()
+    const fd = new FormData()
+    xhr.open("POST", uri, true)
+
+    fd.append(document.getElementById(id).value)
+    xhr.send(fd)
+
+    xhr.onreadystatechange = function(){
+        if (xhr.readyState == 4 && xhr.status == 200) {
+            alert('Success')
+        }
+        else if (xhr.readyState == 4 && xhr.status != 200) {
+            alert('Fail')
+        }
+}
+
+function update_values(){
+    var my_array = []
+
+    {% for dictionary in data %}
+     {% for key, value in dictionary.items() %}
+        var xvar = '{{key}}:{{value}}'
+
+        my_array.push(xvar)
+
+      {% endfor %}
+    {% endfor %}
+
+    console.log(my_array)
+
+}
+</script>
+
+
+</html>
