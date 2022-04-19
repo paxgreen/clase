@@ -1,0 +1,50 @@
+from flask import Flask, render_template, request
+from flask_mysqldb import MySQL
+
+import MySQLdb.cursors
+import mysql.connector
+from mysql import connector
+
+#-------------------------------------------------------
+app = Flask(__name__, template_folder="template")
+#---------------------------------------------
+# CREATE CONNECTION TO MYSQL
+
+mydb = mysql.connector.connect(
+                        host="pax.green",
+                        port=3306,
+                        user="cmtuser",
+                        passwd="passwordcmtuser",
+                        database="cmt2"
+                    )
+
+cursor = mydb.cursor(dictionary = True)
+#----------------------------------------------------
+@app.route('/', methods = ['GET', 'POST'])
+#------------------------------------------
+# FUNCTION TO GET DATA
+
+
+def projectlist():
+    if request.method == 'GET':
+        xql = 'SELECT * FROM test0'
+        cursor.execute(xql)
+        xdata = list(cursor.fetchall())
+        return render_template('edit_htm.htm'
+        , xdata = xdata
+        , varname = ['id', 'nom', 'name'])
+    if request.method == 'POST':
+        xvar2 = request.form.get('nom')
+        xvar = xvar2
+        xquery = f"UPDATE test0 SET nom = '{xvar}' WHERE id = 3"
+        cursor.execute(xquery)
+        mydb.commit()
+
+        return 'test', 200
+
+
+#----------------------------
+# RUN PROGRAM
+
+if __name__ == '__main__':
+    app.run(port=8000,debug=True)
