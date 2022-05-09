@@ -1,0 +1,134 @@
+
+#----------------------------------
+#  CREATE ANALYTE FOR MCMC
+rm(list=ls())
+gc()
+.libPaths('c:/_data/Rpackages')
+pacman::p_load(dplyr, reshape2, tidyverse, polypoly, abind)
+select <- dplyr::select
+
+#================================================
+xdir <- 'C:/_data/bird/data/'
+
+a0 <- readRDS(paste0(xdir, 'analyte.rds'))
+#---------------------------------------------
+
+#===============================
+y <- xtabs(detect ~ rep + id_bird + id_tile
+, aggregate(detect ~ rep + id_bird + id_tile, a0, median))
+
+#--------------
+xdim <- dim(y)
+
+Nspp <- xdim[2]
+Nrep <- xdim[1]
+Ntile <- xdim[3]
+
+#-------------------------------
+# GET DATA FOR EACH VISIT
+reps <- a0 %>%
+select(id_tile, tile
+, rep
+, num_spp, num_detects, num_sampling
+, med_duration, num_observers) %>%
+mutate_at(c(4:8), scale) %>%
+data.frame() 
+
+Xduration <- reps %>%
+select(id_tile, rep, med_duration) %>%
+dcast(rep ~ id_tile, value.var = 'med_duration', fun.aggregate = mean)
+
+Xobservers <- reps %>%
+select(id_tile, rep, num_observers) %>%
+dcast(rep ~ id_tile, value.var = 'num_observers', fun.aggregate = mean)
+                                                
+Xnumspp <- reps %>%
+select(id_tile, rep, num_spp) %>%
+dcast(rep ~ id_tile, value.var = 'num_spp', fun.aggregate = mean)
+
+Xnumdet <- reps %>%
+select(id_tile, rep, num_detects) %>%
+dcast(rep ~ id_tile, value.var = 'num_detects', fun.aggregate = mean)
+
+Xnumevent <- reps %>%
+select(id_tile, rep, num_sampling) %>%
+dcast(rep ~ id_tile, value.var = 'num_sampling', fun.aggregate = mean)
+#===============================================================
+# GET BIRD DATA 
+k <- 1 * (10 ^ -10)
+
+bird <- readRDS(paste0(xdir, 'bird_attributes.rds')) %>% 
+mutate(across(c(3:18), ~ .x/100 )) %>%
+mutate_at(c(2:24), scale) %>%
+mutate(across(2:24, ~ .x + k)) %>% # assures no zeros for ratio transforms/interactions
+arrange(id_bird) 
+#=======================================
+site <- readRDS(paste0(xdir, 'land_attributes.rds')) %>%
+mutate_at(c(3:9), scale)  %>%
+mutate(across(3:9, ~ .x + k)) 
+#======================================
+xcol <- ncol(Xduration)
+
+dat0 <- list(y = y, Ntile = Ntile, Nspp = Nspp, Nrep = Nrep
+#-------------
+, size = data.frame(bird$bmv) 
+, d.inv = data.frame(bird$d.inv)
+, d.vend = data.frame(bird$d.vend)
+, d.vect = data.frame(bird$d.vect)
+, d.vunk = data.frame(bird$d.vunk)
+, d.scav = data.frame(bird$d.scav)
+, d.fruit = data.frame(bird$d.fruit)
+, d.nect = data.frame(bird$d.nect)
+, d.seed = data.frame(bird$d.seed)
+, d.plant = data.frame(bird$d.plant)
+, f.water = data.frame(bird$f.water)
+, f.ground = data.frame(bird$f.ground)
+, f.under = data.frame(bird$f.under)
+, f.mid = data.frame(bird$f.mid)
+, f.canopy = data.frame(bird$f.canopy)
+, f.aerial = data.frame(bird$f.aerial)
+, m.red = data.frame(bird$md_red)
+, v.red = data.frame(bird$mv_red)
+, m.green = data.frame(bird$md_green)
+, v.green = data.frame(bird$mv_green)
+, m.blue = data.frame(bird$md_blue)
+, v.blue = data.frame(bird$mv_blue)
+#-----------------------------
+, tree = data.frame(site$tree)
+, grass = data.frame(site$grass)
+, built = data.frame(site$built)
+, soil = data.frame(site$soil)
+, elev = data.frame(site$elev)
+#----------------------------
+, duration = Xduration[,2:xcol]
+,  observers = Xobservers[,2:xcol]
+, numspp = Xnumspp[,2:xcol]
+, numdet = Xnumdet[,2:xcol]
+, numevent = Xnumevent[,2:xcol]                         
+) 
+
+#======================================
+ini <- function(){
+  list(
+z = array(1, dim = c(Nspp, Ntile))
+
+
+, ypred = array(1, dim = c(Nrep, Nspp, Ntile))
+, a0 = array(1, dim = c(Nspp, Ntile))
+, a1 = array(1 , dim = c(Nspp, Ntile))
+, a2 = array(1 , dim = c(Nspp, Ntile))
+, a3 = array(1 , dim = c(Nspp, Ntile))
+, a4 = array(1 , dim = c(Nspp, Ntile))
+, a5 = array(1 , dim = c(Nspp, Ntile))
+, b0 = array(1 , dim = c(Nspp, Ntile))
+, b1 = array(1 , dim = c(Nspp, Ntile))
+, b2 = array(1 , dim = c(Nspp, Ntile))
+, b3 = array(1 , dim = c(Nspp, Ntile))
+, b4 = array(1 , dim = c(Nspp, Ntile))
+, b5 = array(1 , dim = c(Nspp, Ntile))
+, b6 = array(1 , dim = c(Nspp, Ntile))
+, b7 = array(1 , dim = c(Nspp, Ntile))
+, b8 = array(1 , dim = c(Nspp, Ntile))
+, b9 = array(1 , dim = c(Nspp, Ntile))
+)
+}
