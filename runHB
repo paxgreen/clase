@@ -1,0 +1,43 @@
+gc()
+.libPaths('c:/_data/Rpackages')
+pacman::p_load(dplyr, readr, lubridate, chron, reshape2
+, tidyverse, rjags, jagsUI, beepr, loo, tictoc, R2jags, benchmarkme)
+
+modname <- 'mod71c.rda'
+rhatname <- 'rhat71c.rds'
+waicname <- 'waic71c.rda'
+
+
+
+memory.size() ### Checking your memory size
+memory.limit() ## Checking the set limit
+memory.limit(size=60000) 
+rm(bird, a0, Xduration, Xnumdet, Xnumevent, Xnumspp, Xobservers)  
+options(digits = 22)  
+
+set.seed(2022)                
+
+params <- c('p', 'z', 'ypred', 'w'
+,'a0', 'a1', 'a2', 'a3', 'a4', 'a5'
+,'b0', 'b1', 'b2', 'b3', 'b4', 'b5', 'b6', 'b7', 'b8', 'b9')
+
+#load.module("dic")
+
+tic()
+mod <- jagsUI::jags(
+data = dat0,
+parameters.to.save = params,
+model.file = textConnection(mod),
+,n.chains = 2
+, n.adapt = 3000
+,n.iter = 5000
+,n.burnin = 200
+
+,n.thin = 10
+, inits = ini
+)
+toc()
+
+save(mod, file = paste0(xdir, modname))
+
+#beep(sound = 5)
